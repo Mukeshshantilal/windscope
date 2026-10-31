@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: windscope
+      POSTGRES_PASSWORD: windscope
+      POSTGRES_DB: windscope
+    ports:
+      - "5434:5432"
+    volumes:
+      - windscope_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U windscope -d windscope"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://windscope:windscope@db:5432/windscope
+      CORS_ORIGINS: http://localhost,http://localhost:8088,http://localhost:5174,http://127.0.0.1:8088
+      DECISION_CUTOFF_HOUR: "9"
+      DECISION_CUTOFF_MINUTE: "50"
+      DECISION_CUTOFF_TIMEZONE: Europe/London
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: /api
+    depends_on:
+      - backend
+    ports:
+      - "8088:80"
+
+  importer:
+    profiles: ["import"]
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://windscope:windscope@db:5432/windscope
+    depends_on:
+      db:
+        condition: service_healthy
+    command: python -m app.cli import-historical
+
+volumes:
+  windscope_pgdata:
