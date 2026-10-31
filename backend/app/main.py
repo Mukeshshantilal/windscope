@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.accuracy import router as accuracy_router
 from app.api.dashboard import router as dashboard_router
@@ -44,3 +46,16 @@ app.include_router(generation_router, prefix="/api", tags=["generation"])
 app.include_router(forecasts_router, prefix="/api", tags=["forecasts"])
 app.include_router(accuracy_router, prefix="/api", tags=["accuracy"])
 app.include_router(data_router, prefix="/api", tags=["data"])
+
+_frontend = settings.frontend_dist_path()
+if _frontend is not None:
+    assets = _frontend / "assets"
+    if assets.is_dir():
+        app.mount("/assets", StaticFiles(directory=assets), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    def spa(full_path: str):
+        candidate = _frontend / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(_frontend / "index.html")

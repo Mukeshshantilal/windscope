@@ -255,7 +255,3 @@ The application is prepared for deployment. It has not been claimed as live unle
 - The product is scoped to January 2026 decision dates plus 1 February delivery.
 - Dashboard queries require a completed historical import. Empty KPIs mean “no matched data”, not zero generation.
 - January 2026 is GMT, so UK local time equals UTC for this window.
-
-## AI usage disclosure
-
-This project was built with AI-assisted coding tools, including Cursor. Elexon request parameters and January 2026 response shapes were checked against the live BMRS API before ingestion was implemented. Accuracy figures in the running app come from imported Elexon records, not from generated placeholder generation values.
